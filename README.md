@@ -1,2 +1,371 @@
 # SIH26201
 Student Innovation-There is a need to design drones and robots that can solve some of the pressing challenges of India such as handling medical emergencies, search and rescue operations, etc.
+Saras — Autonomous Embodied AI Robot Car
+
+Embodied Cognitive Edge Navigation via Anthropic's Model Context Protocol (FastMCP)
+
+An open-source, edge-contained autonomous robotics platform designed to bridge frontier multimodal foundation models (Claude Code) with physical embedded hardware. Running on a dual-tier compute stack (Raspberry Pi 4B and ESP32), Saras abstracts drive motors, continuous quadrature odometry, and high-resolution camera vision into standardized Model Context Protocol (MCP) tool endpoints, executing conversational, zero-shot physical navigation without heavyweight robotics middleware.
+
+📌 Project Overview
+
+Embodied Cognitive Architecture: Connects Anthropic's Model Context Protocol (FastMCP) directly to edge hardware over local standard input/output (stdio), exposing physical actuation and sensing as discrete, callable AI tools.
+
+Zero-Shot Natural Language Control: Translates conversational user goals into autonomous multi-step physical action sequences without manual waypoint coding or pre-scanned geometric maps.
+
+Closed-Loop Autonomy: Operates within a continuous Perceive–Reason–Act workflow that cross-validates wheel encoder ticks against camera frames to detect wheel slip and physical stalls.
+
+Persistent Spatial Memory: Overcomes large language model statelessness by maintaining a structured, non-volatile state log (memory/memory.json) on the edge device to remember landmarks, obstacles, and past environment layouts across sessions.
+
+Low-Power Edge Viability: Runs the complete autonomous reasoning and control stack on a 15W ARM single-board computer with a total prototype Bill of Materials (BOM) cost of ₹26,900.
+
+⚠️ Important Operational Constraint: Kinetic movement defaults to short, bounded bursts (0.5 seconds) followed by active camera re-inspection. Software-level PWM clamping and embedded microcontroller watchdogs enforce deterministic physical safety.
+
+🎯 Objectives
+
+Connect multimodal foundation models directly to physical hardware via FastMCP over local stdio.
+
+Enable zero-shot, conversational navigation from plain natural language commands.
+
+Eliminate heavyweight middleware dependencies (such as ROS or ROS 2) with a compact Python architecture (<500 lines of core code).
+
+Establish a non-blocking, full-duplex serial communication pipeline at 115,200 baud between the single-board computer and microcontroller.
+
+Execute deterministic motor PWM timing and microsecond interrupt-driven encoder odometry on an ESP32.
+
+Perform closed-loop visual-inertial verification to identify surface slippage and physical obstructions.
+
+Maintain persistent spatial notes across reboots using structured JSON state storage.
+
+Deliver an electrically isolated, brownout-proof dual-rail power distribution system.
+
+Provide an affordable, reproducible hardware architecture for embodied AI research and hackathons.
+
+✨ Key Features
+
+🧠 Cognitive Agent & FastMCP Interface
+
+Connects Claude Code to physical rover hardware via Anthropic's FastMCP standard. Peripherals are registered as discrete JSON-RPC tools (move, stop, get_encoders, reset_encoders, capture_image), isolating probabilistic cognitive planning from low-level execution.
+
+🗣️ Zero-Shot Conversational Navigation
+
+Translates unstructured human goals (e.g., "Move forward, inspect the obstacle ahead, and describe what you see") into dynamic perception and actuation sequences without pre-programmed path coordinates.
+
+⚡ Dual-Tier Split-Plane Compute
+
+Decouples high-level reasoning from real-time motor timing across two dedicated processing units:
+
+Cognitive Plane (Raspberry Pi 4B): Runs Debian Linux, hosts the Claude Code agent harness, executes the FastMCP server, and handles camera pipelines.
+
+Actuation Plane (ESP32 DevKit V1): Dedicated dual-core microcontroller generating deterministic PWM waves and servicing encoder interrupts.
+
+🏎️ 4WD Skid-Steer Kinematics
+
+Four JGA25-370 geared DC motors mounted to a carbon-PETG chassis, driven by an industrial-grade 30A dual MOS H-bridge capable of handling high motor stall currents.
+
+👁️ Multimodal Visual Perception
+
+A wide-angle Raspberry Pi Camera Module 3 triggered via an isolated, headless rpicam-jpeg pipeline writes snapshots directly to /tmp/frame.jpg for multimodal inspection.
+
+📈 Non-Blocking Odometry & Serial Telemetry
+
+A multithreaded serial driver (hardware/motor.py) uses an independent background daemon thread to stream and decode encoder pulses (ENC:<m1>:<m2>:<m3>:<m4>) at 115,200 baud without stalling the primary agent loop.
+
+🛡️ Deterministic Safety Guardrails
+
+Enforces hard programmatic boundaries across both software and embedded firmware layers:
+
+Safety Parameter
+
+Operational Limit
+
+Protective Function
+
+Linear Speed Clamp
+
+Minimum PWM 150 / 255
+
+Overcomes static friction and prevents motor stall currents
+
+Turning Speed Clamp
+
+Minimum PWM 180 / 255
+
+Guarantees sufficient torque for skid-steer turns
+
+Burst Duration
+
+Maximum 0.5s default
+
+Eliminates runaway hazards during cognitive inference
+
+Hardware Watchdog
+
+500 ms Serial Timeout
+
+Microcontroller auto-halts all motors if serial drops
+
+Emergency Halt
+
+Instantaneous S Command
+
+Flushes buffered queues and forces 0% PWM duty cycle
+
+🔍 Visual-Inertial Slip Detection
+
+Cross-checks cumulative encoder tick counts against consecutive visual frames. If encoders record displacement but optical landmarks remain static, the agent infers wheel slip, halts immediately, and recalibrates its heading.
+
+🔋 Isolated Dual-Rail Power Distribution
+
+Powered by a 3S2P 18650 Li-ion battery pack (11.1V, 5,200 mAh, BMS). High-current raw 11.1V powers the H-bridge motor driver, while an isolated 5.1V/5A buck regulator supplies the Raspberry Pi and ESP32 to eliminate inductive brownout resets.
+
+💾 Persistent Spatial Memory
+
+Overcomes large language model statelessness by maintaining memory/memory.json on the edge host, logging discovered landmarks, obstacle locations, and room layouts across operational sessions.
+
+🛠️ Hardware Bill of Materials (BOM)
+
+Subsystem Component
+
+Technical Specification
+
+Qty
+
+Unit Cost (INR)
+
+Total Cost (INR)
+
+Main Compute Unit
+
+Raspberry Pi 4B (4GB LPDDR4)
+
+1
+
+₹5,200
+
+₹5,200
+
+Microcontroller Unit
+
+ESP32 DevKit V1 (Dual Core, 240MHz)
+
+1
+
+₹450
+
+₹450
+
+Optical Camera Module
+
+Raspberry Pi Camera Module 3 (Wide Angle)
+
+1
+
+₹2,200
+
+₹2,200
+
+Rotational Laser Scanner
+
+LDROBOT LD06 2D LiDAR (12m, 4500Hz)
+
+1
+
+₹7,500
+
+₹7,500
+
+Solid-State Matrix Ranging
+
+DFRobot VL53L7CX Time-of-Flight (8x8 Array)
+
+1
+
+₹1,800
+
+₹1,800
+
+Geared Drive Motors
+
+JGA25-370 DC Motors with Hall Encoders
+
+4
+
+₹650
+
+₹2,600
+
+Motor Driver Board
+
+Dual Channel MOS H-Bridge (5–12V, 30A)
+
+1
+
+₹950
+
+₹950
+
+Battery Subsystem
+
+18650 Li-ion Cells (3S2P, 11.1V, BMS)
+
+1
+
+₹1,600
+
+₹1,600
+
+Audio/Visual Interfaces
+
+7-inch HDMI Display, USB Mic, Speaker
+
+1 Set
+
+₹3,400
+
+₹3,400
+
+Structural Chassis
+
+3D Printed PETG Chassis, Heat-Set Inserts
+
+1 Set
+
+₹1,200
+
+₹1,200
+
+Total Prototype Cost
+
+Fully Functional Embodied Agent Unit
+
+--
+
+--
+
+₹26,900
+
+🔌 FastMCP Tool API & Serial Protocol Specification
+
+1. Registered FastMCP Tools (servers/robot_server.py)
+
+move(direction: str, speed: int = 150, duration: float = 0.0) -> str
+
+Drives motors (forward, backward, left, right). Clamps linear speed to $\ge 150$ and turning speed to $\ge 180$. Automatically halts after duration seconds.
+
+stop() -> str
+
+Emergency halt command; instantly halts all four drive motors.
+
+get_encoders() -> dict
+
+Returns cumulative tick counts: {"m1": int, "m2": int, "m3": int, "m4": int}.
+
+reset_encoders() -> str
+
+Clears all odometry registers to zero before initiating a new movement vector.
+
+capture_image() -> str
+
+Executes headless capture via rpicam-jpeg, saving the frame to /tmp/frame.jpg.
+
+2. Embedded Serial ASCII Protocol (115,200 Baud UART)
+
+M <left> <right>: Sets motor PWM duty cycles (-255 to +255).
+
+S: Stops all motors immediately.
+
+RESET: Resets microcontroller encoder accumulation registers to zero.
+
+ENC:<m1>:<m2>:<m3>:<m4>: Telemetry stream emitted continuously by ESP32 firmware.
+
+🏗️ System Architecture & Workflow
+
+Functional Layers
+
+User Interaction & Goal Plane:
+
+Natural language mission prompts dispatched via terminal CLI to Claude Code.
+
+Cognitive Agent Layer (Raspberry Pi 4B):
+
+Claude Code reasoning engine processes goals, multimodal visual frames, and historical logs (memory.json). Dispatches structured tool calls via JSON-RPC 2.0 over standard input/output (stdio).
+
+Protocol Middleware Layer (servers/robot_server.py):
+
+FastMCP Server receives JSON-RPC requests, performs schema validation, and clamps speed parameters. Dispatches to dedicated tool modules:
+
+Motion Tools (move, stop) route motion and halt commands to driver.
+
+Odometry Tools (get_encoders, reset_encoders) read or zero odometry registers.
+
+Camera Tool (capture_image) triggers headless rpicam-jpeg capture to /tmp/frame.jpg.
+
+Hardware Abstraction Layer (hardware/motor.py):
+
+Multithreaded Python driver managing a full-duplex USB-UART link at 115,200 baud. Background listener daemon thread continuously parses incoming telemetry.
+
+Embedded Control Layer (ESP32 DevKit V1):
+
+Generates microsecond-accurate hardware PWM signals and manages continuous quadrature encoder interrupt service routines (ISRs).
+
+Physical Plant & Perception:
+
+30A Dual MOS H-Bridge driving four JGA25 geared DC motors, paired with the Raspberry Pi Camera Module 3 writing frames to local storage.
+
+Closed-Loop Telemetry & Feedback Pathways
+
+Kinematic Actuation Loop:
+
+Claude Code $\rightarrow$ FastMCP Server $\rightarrow$ Serial Driver (M <left> <right>) $\rightarrow$ ESP32 $\rightarrow$ 30A H-Bridge $\rightarrow$ 4x JGA25 Motors.
+
+Odometry Telemetry Loop:
+
+Hall-effect sensors $\rightarrow$ ESP32 hardware ISRs $\rightarrow$ Serial stream (ENC:a:b:c:d) $\rightarrow$ Background listener thread in motor.py $\rightarrow$ Position registers $\rightarrow$ FastMCP get_encoders().
+
+Visual Perception Loop:
+
+FastMCP capture_image() $\rightarrow$ rpicam-jpeg pipeline $\rightarrow$ Disk /tmp/frame.jpg $\rightarrow$ Multimodal context inspection in Claude Code $\rightarrow$ Closed-loop reasoning and verification.
+
+🛡️ Risk Analysis & Engineering Mitigation
+
+Risk / Challenge
+
+Operational Threat
+
+Engineering Strategy / Mitigation
+
+AI Inference Latency
+
+Collision during cognitive thinking pauses
+
+Bounded 0.5s bursts + mandatory halt before turn + ESP32 hardware watchdog (500 ms)
+
+Skid-Steer Wheel Slip
+
+Erroneous odometry on smooth surfaces
+
+Visual-inertial verification comparing encoder counts with optical frame deltas
+
+Logic Voltage Brownouts
+
+Motor stall currents drop voltage $<4.63\text{V}$, crashing Pi
+
+Dual-rail power isolation (5.1V/5A buck logic regulator separated from 11.1V motor rail)
+
+Offline Environments
+
+Loss of cloud LLM API connectivity
+
+FastMCP protocol abstraction allows drop-in offline edge SLMs (Llama-3-8B 4-bit)
+
+🌍 Real-World Impact & Benefits
+
+Zero-Training Industrial Operation: Warehouse operators command logistics missions using plain English, cutting mission configuration time by 90% (from hours to under 30 seconds).
+
+Workplace Safety & Hazard Elimination: Replaces human personnel in toxic industrial crawlspaces, chemical storage areas, and duct networks with an autonomous rover.
+
+Economic Advantage: Complete prototype delivered for ₹26,900, achieving an 80% cost reduction compared to commercial AGV research platforms (₹1.5L–₹3L).
+
+Strategic Alignment (Atmanirbhar Bharat): Replaces imported proprietary navigation stacks with an open-source, reproducible domestic hardware architecture.
+
+Environmental Efficiency: Consumes just 15W of edge power on an ARM single-board computer, saving 70% power compared to heavy GPU mobile workstations (45W–65W).
